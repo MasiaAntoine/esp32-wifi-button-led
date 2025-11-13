@@ -1,146 +1,131 @@
-# ESP32 – Bouton WiFi → Contrôle d’une LED distante
+# ESP32 – Bouton WiFi → LED distante
 
-Ce projet utilise **deux ESP32** connectés sur le même réseau WiFi pour contrôler une LED à distance :
-
-- **ESP32-Bouton** : détecte un appui sur un bouton et envoie une requête HTTP.
-- **ESP32-LED** : reçoit cette requête et bascule l’état d’une LED (ON/OFF).
+Contrôler une LED distante via WiFi avec deux cartes ESP32 : l’une agit comme bouton connecté, l’autre héberge un mini-serveur HTTP qui commute la LED. Ce dépôt fournit les deux sketches Arduino prêts à téléverser.
 
 ---
 
-# 🧩 Structure du projet
+## ⚡️ Aperçu rapide
+
+- `esp32-led` : serveur HTTP qui expose l’endpoint `/toggle`. Chaque appel inverse l’état de la LED et renvoie `ON` ou `OFF`.
+- `esp32-bouton` : client HTTP qui détecte les pressions, applique un anti-rebond logiciel et déclenche `GET /toggle` via mDNS (`esp32-led.local`).
+
+---
+
+## 🧰 Matériel requis
+
+- 2 × cartes ESP32 DevKit (ou équivalentes)
+- 1 × bouton poussoir (module ou simple switch)
+- 1 × LED rouge + résistance 150–330 Ω
+- Fils dupont, breadboard, alimentation USB
+
+---
+
+## 🔌 Câblage
+
+### 💡 ESP32-LED
+
+| Composant                 | ESP32                    |
+| ------------------------- | ------------------------ |
+| LED (anode, patte longue) | `GPIO2`                  |
+| LED (cathode)             | Résistance 220 Ω → `GND` |
+
+### 🔘 ESP32-Bouton
+
+| Pin module bouton | ESP32    |
+| ----------------- | -------- |
+| `VCC`             | `3V3`    |
+| `GND`             | `GND`    |
+| `OUT`             | `GPIO16` |
+
+> Le code active l’`INPUT_PULLUP`; selon votre module, adaptez le câblage (contact à la masse ou au VCC).
+
+---
+
+## 🧩 Structure du projet
+
+```
+esp32-wifi-button-led/
 ├── esp32-led/
-│ └── esp32-led.ino
-│
+│   └── esp32-led.ino
 ├── esp32-bouton/
-│ └── esp32-bouton.ino
-│
+│   └── esp32-bouton.ino
 └── README.md
+```
 
 ---
 
-# 🔌 Câblage
+## 🛠️ Préparation de l’environnement
 
-## 🟥 ESP32-LED
-
-| Composant | ESP32 |
-|----------|-------|
-| LED rouge (patte longue +) | GPIO2 |
-| LED patte courte (–) | Résistance 220Ω → GND |
-
-
----
-
-## 🟦 ESP32-Bouton
-
-Module bouton → ESP32 :
-
-| Pin bouton | ESP32 |
-|-----------|--------|
-| VCC | 3.3V |
-| GND | GND |
-| OUT | GPIO16 |
+1. **Arduino IDE** → _Fichier ▸ Préférences_ → ajouter<br>`https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json` dans _URL de gestionnaire de cartes supplémentaires_.
+2. _Outils ▸ Type de carte ▸ Gestionnaire de cartes_ → rechercher « esp32 » → installer **Espressif Systems**.
+3. Dans _Outils_ sélectionner :
+   - `Board` : **ESP32 Dev Module**
+   - `Upload Speed` : 921600 (ou 115200 si instable)
+   - `CPU Frequency` : 240 MHz (WiFi/BT)
+   - `Flash Frequency` : 80 MHz
+   - `Flash Mode` : QIO
+   - `Flash Size` : 4 MB (32 Mb)
+   - `Partition Scheme` : Default 4MB with spiffs (1.2MB APP / 1.5MB SPIFFS)
+   - `Core Debug Level` : None
+   - `Port` : le port série correspondant à chaque carte
 
 ---
 
-# 📡 Adresses MAC
+## 🧾 Configuration des sketches
 
-| Appareil | Adresse MAC |
-|----------|-------------|
-| ESP32 LED | `CC:DB:A7:94:BC:54` |
-| ESP32 Bouton | `5C:01:3B:68:9B:68` |
+1. Ouvrir `esp32-led/esp32-led.ino`.
+   - Renseigner votre SSID et mot de passe WiFi (lignes 6-7 : `const char* ssid`, `const char* password`).
+   - Facultatif : définir `LED_PIN` si vous utilisez une autre broche.
+2. Ouvrir `esp32-bouton/esp32-bouton.ino`.
+   - Renseigner les mêmes identifiants WiFi (également lignes 6-7).
+   - Ajuster `BUTTON_PIN` et `HOSTNAME` si besoin.
 
-Recommandé : réserver des IP fixes dans la box Internet.
-
----
-
-# 🛠️ Installation et configuration
-
-## ⚙️ Configuration de l’IDE Arduino
-
-### 1. Installer le support ESP32
-
-1. Arduino IDE → **Fichier → Préférences**
-2. Dans *URL de gestionnaire de cartes supplémentaires*, ajouter : https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
-3. Aller dans **Outils → Type de carte → Gestionnaire de cartes**
-4. Rechercher **esp32**
-5. Installer le paquet officiel **Espressif Systems**
+> Astuce : stocker les identifiants dans un fichier `secrets.h` ignoré par Git, et l’inclure dans chaque sketch (`#include "secrets.h"`).
 
 ---
 
-### 2. Paramètres de compilation
+## 🚀 Téléversement
 
-Dans **Outils**, sélectionner :
-
-- **Type de carte** : ESP32 Dev Module  
-- **CPU Frequency** : 240MHz (WiFi/BT)  
-- **Flash Frequency** : 80MHz  
-- **Flash Mode** : QIO  
-- **Flash Size** : 4MB (32Mb)  
-- **Partition Scheme** : Default 4MB with spiffs (1.2MB APP / 1.5MB SPIFFS)  
-- **Core Debug Level** : None  
-- **Port** : le port COM où est connecté l’ESP32  
+1. Connecter uniquement l’ESP32-LED → téléverser `esp32-led.ino`.
+2. Ouvrir le Moniteur Série (115200 bauds) → vérifier l’acquisition IP et le message `mDNS responder started`.
+3. Connecter l’ESP32-Bouton → téléverser `esp32-bouton.ino`.
+4. Vérifier dans le Moniteur Série du bouton que la résolution mDNS (`esp32-led.local`) aboutit et que chaque pression génère `GET /toggle`.
 
 ---
 
-# 📡 Fonctionnement réseau
+## ✅ Tests de fonctionnement
 
-## 🌐 ESP32-LED (serveur HTTP)
-
-Expose l’URL : http://esp32-led.local/toggle
-
-
-Chaque appel `/toggle` :
-
-- change l’état de la LED
-- renvoie "ON" ou "OFF"
-
-## 📡 ESP32-Bouton (client HTTP)
-
-- détecte les appuis (anti-rebond)
-- résout `esp32-led.local` via mDNS
-- envoie `GET /toggle` à chaque pression
+1. Appuyer sur le bouton : la LED doit changer d’état instantanément.
+2. Depuis un navigateur : `http://esp32-led.local/toggle` doit retourner `ON` ou `OFF`.
+3. Pour tester sans bouton : envoyer un `curl http://esp32-led.local/toggle`.
 
 ---
 
-# 🚀 Utilisation
+## 🧪 Dépannage
 
-1. Brancher l’ESP32-LED → ouvrir le Moniteur Série  
-2. Attendre l’IP + MAC + confirmation mDNS  
-3. Brancher l’ESP32-Bouton  
-4. Appuyer sur le bouton → la LED change d’état instantanément
+- **💤 La LED reste éteinte**  
+  Vérifier la polarité, la résistance, la broche `GPIO2` ou modifier `LED_PIN`.
 
----
+- **🙈 Bouton inactif**  
+  Confirmer le câblage sur `GPIO16`, vérifier l’anti-rebond, tester avec un simple pont vers `GND`.
 
-# 🧪 Dépannage
+- **📶 mDNS indisponible**  
+  Certaines box bloquent `.local`. Utiliser l’adresse IP affichée dans le Moniteur Série, ou réserver une IP fixe via la box.
 
-### La LED ne s’allume pas
-- Vérifier polarité
-- Vérifier résistance 150–330Ω
-
-### Le bouton ne fait rien
-- OUT bien sur GPIO16
-- Tester `INPUT_PULLUP`
-- Vérifier que les deux ESP sont bien connectés au même WiFi
-
-### mDNS ne fonctionne pas
-- Certaines box bloquent `.local`
-- Solution : réserver une IP fixe ou utiliser l’IP dans le code
+- **🌪️ WiFi instable**  
+  Réduire la vitesse de téléversement, vérifier l’alimentation USB, rapprocher les modules du routeur.
 
 ---
 
-# 📦 Évolutions possibles
+## 🔭 Pour aller plus loin
 
-- Communication **WebSocket** (temps réel)
-- Utilisation de **MQTT**
-- Passage à **ESP-NOW** (ultra rapide, sans WiFi)
-- Multi-boutons / multi-LEDs
+- Remplacer HTTP par MQTT ou WebSocket pour le temps réel.
+- Ajouter plusieurs boutons / LEDs avec gestion d’états.
+- Utiliser ESP-NOW pour supprimer la dépendance au WiFi.
+- Intégrer Home Assistant via ESPHome.
 
 ---
 
-# 📜 Licence
+## 📜 Licence
 
-Libre utilisation et modification.
-
-
-
-
+Projet librement réutilisable et modifiable. Attribution appréciée.
