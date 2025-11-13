@@ -8,6 +8,9 @@ Contrôler une LED distante via WiFi avec deux cartes ESP32 : l’une agit comme
 
 - `esp32-led` : serveur HTTP qui expose l’endpoint `/toggle`. Chaque appel inverse l’état de la LED et renvoie `ON` ou `OFF`.
 - `esp32-bouton` : client HTTP qui détecte les pressions, applique un anti-rebond logiciel et déclenche `GET /toggle` via mDNS (`esp32-led.local`).
+- 🎥 Démo rapide en vidéo : [ESP32 WiFi Bouton → LED (YouTube Shorts)](https://www.youtube.com/shorts/JkvxhKgQAlg)
+
+[![Miniature de la démo vidéo](https://img.youtube.com/vi/JkvxhKgQAlg/maxresdefault.jpg)](https://www.youtube.com/shorts/JkvxhKgQAlg)
 
 ---
 
