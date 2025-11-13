@@ -29,6 +29,8 @@ Contrôler une LED distante via WiFi avec deux cartes ESP32 : l’une agit comme
 | LED (anode, patte longue) | `GPIO2`                  |
 | LED (cathode)             | Résistance 220 Ω → `GND` |
 
+![Schéma de câblage ESP32-LED](https://raw.githubusercontent.com/MasiaAntoine/esp32-wifi-button-led/refs/heads/main/schema/esp-led.png)
+
 ### 🔘 ESP32-Bouton
 
 | Pin module bouton | ESP32    |
@@ -38,6 +40,8 @@ Contrôler une LED distante via WiFi avec deux cartes ESP32 : l’une agit comme
 | `OUT`             | `GPIO16` |
 
 > Le code active l’`INPUT_PULLUP`; selon votre module, adaptez le câblage (contact à la masse ou au VCC).
+
+![Schéma de câblage ESP32-Bouton](https://raw.githubusercontent.com/MasiaAntoine/esp32-wifi-button-led/refs/heads/main/schema/esp-button.png)
 
 ---
 
